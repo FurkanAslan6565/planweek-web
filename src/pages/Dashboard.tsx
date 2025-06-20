@@ -32,6 +32,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/tr';
 import updateLocale from 'dayjs/plugin/updateLocale';
+import HabitCard from '../components/HabitCard';
 
 dayjs.extend(updateLocale);
 dayjs.updateLocale('tr', {
@@ -137,7 +138,7 @@ const AddHabitDialog: FC<AddHabitDialogProps> = ({ open, onClose, onAddHabit, we
 
 // --- Main Dashboard Component ---
 const Dashboard: React.FC = () => {
-  const { state, addHabit, addHabitLog } = useHabitContext();
+  const { state, addHabit, addHabitLog, updateHabit, deleteHabit } = useHabitContext();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -154,17 +155,24 @@ const Dashboard: React.FC = () => {
 
   const handleToggleCompletion = (habit: Habit, date: Dayjs) => {
     const logForDay = state.habitLogs.find(log => log.habitId === habit.id && dayjs(log.date).isSame(date, 'day'));
-
-    if (logForDay) {
-      // Future: implement un-complete logic by deleting the log
-    } else {
+    if (!logForDay) {
       addHabitLog({
         habitId: habit.id,
         date: date.toDate(),
-        completedValue: 1, 
+        completedValue: 1,
         notes: '',
       });
     }
+  };
+
+  // Edit handler for HabitCard
+  const handleEditHabit = (habit: Habit, updated: Omit<Habit, 'id' | 'createdAt'>) => {
+    updateHabit({ ...habit, ...updated });
+  };
+
+  // Delete handler for HabitCard
+  const handleDeleteHabit = (habit: Habit) => {
+    deleteHabit(habit.id);
   };
 
   return (
@@ -230,64 +238,19 @@ const Dashboard: React.FC = () => {
                   );
                   return (
                     <Grid item xs={12} key={habit.id}>
-                      <Card
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          p: 2,
-                          backgroundColor: isCompleted
-                            ? alpha(theme.palette.success.main, 0.1)
-                            : 'background.paper',
-                          transition: 'background-color 0.3s ease-in-out',
-                        }}
-                      >
-                        <Box sx={{ fontSize: 24, mr: 2, color: habit.color }}>
-                          {habit.icon}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              textDecoration: isCompleted
-                                ? 'line-through'
-                                : 'none',
-                              color: isCompleted
-                                ? 'text.secondary'
-                                : 'text.primary',
-                            }}
-                          >
-                            {habit.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {habit.description}
-                          </Typography>
-                        </Box>
-                        <Tooltip
-                          title={isCompleted ? 'Tamamlandı' : 'Tamamla'}
-                        >
-                          <IconButton
-                            onClick={() => handleToggleCompletion(habit, selectedDay)}
-                            sx={{
-                              color: isCompleted
-                                ? 'success.main'
-                                : 'primary.main',
-                              border: '1px solid',
-                              borderColor: isCompleted
-                                ? 'transparent'
-                                : 'divider',
-                            }}
-                          >
-                            <CheckIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Card>
+                      <HabitCard
+                        habit={habit}
+                        isCompleted={isCompleted}
+                        onToggleComplete={() => handleToggleCompletion(habit, selectedDay)}
+                        onEdit={(updated) => handleEditHabit(habit, updated)}
+                        onDelete={() => handleDeleteHabit(habit)}
+                      />
                     </Grid>
                   );
                 })}
               </Grid>
             ) : (
               <Box sx={{ textAlign: 'center', py: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <InfoIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
                 <Typography variant="h6" sx={{ mt: 2 }}>Bu hafta için alışkanlık yok.</Typography>
                 <Typography color="text.secondary">Yeni bir haftalık alışkanlık eklemek için '+' butonuna tıkla.</Typography>
               </Box>
