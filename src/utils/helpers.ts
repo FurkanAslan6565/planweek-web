@@ -105,10 +105,8 @@ export const calculateHabitStats = (habit: Habit, logs: HabitLog[]): HabitStats 
   const totalValue = habitLogs.reduce((sum, log) => sum + log.completedValue, 0);
   const averageValue = totalValue / totalCompletions;
   
-  // Calculate total time (for duration habits)
-  const totalTime = habit.targetType === 'duration' 
-    ? habitLogs.reduce((sum, log) => sum + log.completedValue, 0)
-    : 0;
+  // Calculate total time (just sum completedValue)
+  const totalTime = habitLogs.reduce((sum, log) => sum + log.completedValue, 0);
   
   return {
     totalCompletions,
@@ -128,7 +126,7 @@ export const getHabitProgress = (habit: Habit, logs: HabitLog[], date: Date = ne
   if (dayLogs.length === 0) return 0;
   
   const totalCompleted = dayLogs.reduce((sum, log) => sum + log.completedValue, 0);
-  return Math.min((totalCompleted / habit.targetValue) * 100, 100);
+  return totalCompleted > 0 ? 100 : 0;
 };
 
 export const getRandomColor = (): string => {

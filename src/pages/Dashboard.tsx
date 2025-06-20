@@ -15,7 +15,6 @@ import {
   DialogActions,
   TextField,
   Paper,
-  Tooltip,
   useTheme,
   alpha
 } from '@mui/material';
@@ -237,7 +236,7 @@ const Dashboard: React.FC = () => {
                       dayjs(log.date).isSame(selectedDay, 'day')
                   );
                   return (
-                    <Grid item xs={12} key={habit.id}>
+                    <Box key={habit.id} sx={{ width: '100%' }}>
                       <HabitCard
                         habit={habit}
                         isCompleted={isCompleted}
@@ -245,7 +244,7 @@ const Dashboard: React.FC = () => {
                         onEdit={(updated) => handleEditHabit(habit, updated)}
                         onDelete={() => handleDeleteHabit(habit)}
                       />
-                    </Grid>
+                    </Box>
                   );
                 })}
               </Grid>

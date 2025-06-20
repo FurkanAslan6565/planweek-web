@@ -27,7 +27,6 @@ import {
 import { HabitProvider } from './contexts/HabitContext';
 import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
-import Timer from './components/Timer';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
