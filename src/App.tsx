@@ -22,7 +22,8 @@ import {
   TrendingUp as StatsIcon,
   Settings as SettingsIcon,
   Brightness4 as DarkIcon,
-  Brightness7 as LightIcon
+  Brightness7 as LightIcon,
+  Book as JournalIcon,
 } from '@mui/icons-material';
 import { HabitProvider } from './contexts/HabitContext';
 import Dashboard from './pages/Dashboard';
@@ -193,7 +194,7 @@ function App() {
   
   const AppContent = () => {
     const location = useLocation();
-    const paths = ['/', '/stats', '/settings'];
+    const paths = ['/', '/stats', '/journal', '/settings'];
     const currentTab = paths.indexOf(location.pathname);
 
     return (
@@ -264,7 +265,7 @@ function App() {
         </AppBar>
 
         {/* Main Content */}
-        <Box component="main" sx={{ flexGrow: 1, pb: isMobile ? '70px' : 0 }}>
+        <Box sx={{ flexGrow: 1, py: isMobile ? '70px' : 0, pb: isMobile ? '80px' : 4 }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/stats" element={<Stats />} />
@@ -274,25 +275,14 @@ function App() {
           </Routes>
         </Box>
 
-        {/* Bottom Navigation - Only visible on mobile */}
+        {/* Bottom Navigation for Mobile */}
         {isMobile && (
-          <Paper 
-            sx={{ 
-              position: 'fixed', 
-              bottom: 0, 
-              left: 0, 
-              right: 0,
-              zIndex: 1000
-            }} 
-            elevation={3}
-          >
-            <BottomNavigation
-              showLabels
-              value={currentTab}
-            >
-              <BottomNavigationAction component={Link} to="/" label="Ana Sayfa" icon={<HomeIcon />} />
-              <BottomNavigationAction component={Link} to="/stats" label="İstatistikler" icon={<StatsIcon />} />
-              <BottomNavigationAction component={Link} to="/settings" label="Ayarlar" icon={<SettingsIcon />} />
+          <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1000 }} elevation={3}>
+            <BottomNavigation showLabels value={currentTab}>
+              <BottomNavigationAction label="Ana Sayfa" icon={<HomeIcon />} component={Link} to="/" />
+              <BottomNavigationAction label="İstatistikler" icon={<StatsIcon />} component={Link} to="/stats" />
+              <BottomNavigationAction label="Günlüğüm" icon={<JournalIcon />} component={Link} to="/journal" />
+              <BottomNavigationAction label="Ayarlar" icon={<SettingsIcon />} component={Link} to="/settings" />
             </BottomNavigation>
           </Paper>
         )}
