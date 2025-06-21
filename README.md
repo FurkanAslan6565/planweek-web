@@ -73,11 +73,8 @@ Katkılarınızı memnuniyetle karşılıyoruz! Lütfen önce bir issue açın v
 4. Branch'e pushlayın (`git push origin feature/yeniozellik`)
 5. Pull request oluşturun
 
-## Lisans
-[MIT](LICENSE)
 
 ## İletişim
 Her türlü soru ve öneriniz için:
 - **Furkan Aslan**  
   [GitHub](https://github.com/FurkanAslan6565)  
-  furkanaslan@example.com
