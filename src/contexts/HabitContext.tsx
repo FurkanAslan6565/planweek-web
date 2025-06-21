@@ -14,7 +14,8 @@ type HabitAction =
   | { type: 'ADD_HABIT'; payload: Omit<Habit, 'id' | 'createdAt'> }
   | { type: 'UPDATE_HABIT'; payload: Habit }
   | { type: 'DELETE_HABIT'; payload: string }
-  | { type: 'ADD_HABIT_LOG'; payload: Omit<HabitLog, 'id'> }
+  | { type: 'UPSERT_HABIT_LOG'; payload: Omit<HabitLog, 'id'> }
+  | { type: 'DELETE_HABIT_LOG'; payload: { habitId: string; date: Date } }
   | { type: 'ADD_TIMER_SESSION'; payload: TimerSession }
   | { type: 'LOAD_STATE'; payload: HabitState };
 
@@ -44,15 +45,34 @@ const habitReducer = (state: HabitState, action: HabitAction): HabitState => {
         timerSessions: state.timerSessions.filter(session => session.habitId !== action.payload),
       };
 
-    case 'ADD_HABIT_LOG':
-      const newLog: HabitLog = { ...action.payload, id: uuidv4() };
+    case 'UPSERT_HABIT_LOG': {
+      const { payload } = action;
       const existingLogIndex = state.habitLogs.findIndex(
-        log => log.habitId === newLog.habitId && new Date(log.date).toDateString() === new Date(newLog.date).toDateString()
+        log => log.habitId === payload.habitId && new Date(log.date).toDateString() === new Date(payload.date).toDateString()
       );
+
       if (existingLogIndex !== -1) {
-        return state;
+        // Update existing log
+        const updatedLogs = [...state.habitLogs];
+        const existingLog = updatedLogs[existingLogIndex];
+        updatedLogs[existingLogIndex] = { ...existingLog, ...payload };
+        return { ...state, habitLogs: updatedLogs };
+      } else {
+        // Add new log
+        const newLog: HabitLog = { ...payload, id: uuidv4() };
+        return { ...state, habitLogs: [...state.habitLogs, newLog] };
       }
-      return { ...state, habitLogs: [...state.habitLogs, newLog] };
+    }
+    
+    case 'DELETE_HABIT_LOG': {
+        const { habitId, date } = action.payload;
+        return {
+            ...state,
+            habitLogs: state.habitLogs.filter(
+                log => !(log.habitId === habitId && new Date(log.date).toDateString() === new Date(date).toDateString())
+            )
+        };
+    }
 
     case 'ADD_TIMER_SESSION':
       return { ...state, timerSessions: [...state.timerSessions, action.payload] };
@@ -70,7 +90,8 @@ interface HabitContextProps {
   addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => void;
   updateHabit: (habit: Habit) => void;
   deleteHabit: (id: string) => void;
-  addHabitLog: (log: Omit<HabitLog, 'id'>) => void;
+  upsertHabitLog: (log: Omit<HabitLog, 'id'>) => void;
+  deleteHabitLog: (log: { habitId: string; date: Date }) => void;
 }
 
 const HabitContext = createContext<HabitContextProps | undefined>(undefined);
@@ -105,10 +126,11 @@ export const HabitProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const addHabit = (habit: Omit<Habit, 'id' | 'createdAt'>) => dispatch({ type: 'ADD_HABIT', payload: habit });
   const updateHabit = (habit: Habit) => dispatch({ type: 'UPDATE_HABIT', payload: habit });
   const deleteHabit = (id: string) => dispatch({ type: 'DELETE_HABIT', payload: id });
-  const addHabitLog = (log: Omit<HabitLog, 'id'>) => dispatch({ type: 'ADD_HABIT_LOG', payload: log });
+  const upsertHabitLog = (log: Omit<HabitLog, 'id'>) => dispatch({ type: 'UPSERT_HABIT_LOG', payload: log });
+  const deleteHabitLog = (log: { habitId: string; date: Date }) => dispatch({ type: 'DELETE_HABIT_LOG', payload: log });
 
   return (
-    <HabitContext.Provider value={{ state, addHabit, updateHabit, deleteHabit, addHabitLog }}>
+    <HabitContext.Provider value={{ state, addHabit, updateHabit, deleteHabit, upsertHabitLog, deleteHabitLog }}>
       {children}
     </HabitContext.Provider>
   );

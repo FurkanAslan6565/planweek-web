@@ -17,18 +17,20 @@ import {
   TextField,
   Button
 } from '@mui/material';
-import { MoreVert, CheckCircle, Edit, Delete } from '@mui/icons-material';
+import { MoreVert, CheckCircle, Edit, Delete, NoteAddOutlined, EditNote } from '@mui/icons-material';
 import type { Habit } from '../types';
 
 interface HabitCardProps {
   habit: Habit;
   isCompleted: boolean;
+  note?: string;
   onToggleComplete: () => void;
   onEdit: (updated: Omit<Habit, 'id' | 'createdAt'>) => void;
   onDelete: () => void;
+  onOpenNoteDialog: () => void;
 }
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompleted, onToggleComplete, onEdit, onDelete }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompleted, note, onToggleComplete, onEdit, onDelete, onOpenNoteDialog }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -121,23 +123,34 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, isCompleted, onToggleCompl
             </Typography>
           )}
         </Box>
-        {/* Complete Button */}
-        <Tooltip title={isCompleted ? 'Tamamlandı' : 'Tamamla'}>
-          <IconButton
-            onClick={onToggleComplete}
-            sx={{
-              color: isCompleted ? 'success.main' : 'primary.main',
-              mr: 1,
-              transition: 'color 0.2s',
-            }}
-          >
-            <CheckCircle fontSize="large" />
+
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {isCompleted && (
+            <Tooltip title={note ? "Notu Düzenle" : "Not Ekle"}>
+              <IconButton onClick={onOpenNoteDialog} sx={{ mr: 1 }}>
+                {note ? <EditNote color="action" /> : <NoteAddOutlined color="action" />}
+              </IconButton>
+            </Tooltip>
+          )}
+          {/* Complete Button */}
+          <Tooltip title={isCompleted ? 'Geri Al' : 'Tamamla'}>
+            <IconButton
+              onClick={onToggleComplete}
+              sx={{
+                color: isCompleted ? 'success.main' : 'primary.main',
+                transition: 'color 0.2s',
+              }}
+            >
+              <CheckCircle fontSize="large" />
+            </IconButton>
+          </Tooltip>
+          {/* Menu */}
+          <IconButton onClick={handleMenuOpen} sx={{ ml: 0.5 }}>
+            <MoreVert />
           </IconButton>
-        </Tooltip>
-        {/* Menu */}
-        <IconButton onClick={handleMenuOpen} sx={{ ml: 0.5 }}>
-          <MoreVert />
-        </IconButton>
+        </Box>
+        
         <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleMenuClose}>
           <MenuItem onClick={handleEditOpen}>
             <Edit fontSize="small" sx={{ mr: 1 }} /> Düzenle

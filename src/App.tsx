@@ -27,6 +27,7 @@ import {
 import { HabitProvider } from './contexts/HabitContext';
 import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
+import Journal from './pages/Journal';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -233,6 +234,7 @@ function App() {
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <NavButton label="Ana Sayfa" to="/" />
                     <NavButton label="İstatistikler" to="/stats" />
+                    <NavButton label="Günlüğüm" to="/journal" />
                     <NavButton label="Ayarlar" to="/settings" />
                   </Box>
                 )}
@@ -266,6 +268,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/stats" element={<Stats />} />
+            <Route path="/journal" element={<Journal />} />
             <Route path="/settings" element={settingsPage} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
