@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import {
   ThemeProvider,
@@ -25,10 +25,22 @@ import {
   Brightness7 as LightIcon,
   Book as JournalIcon,
 } from '@mui/icons-material';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HabitProvider } from './contexts/HabitContext';
 import Dashboard from './pages/Dashboard';
 import Stats from './pages/Stats';
 import Journal from './pages/Journal';
+import LoginPage from './pages/Login';
+import RegisterPage from './pages/RegisterPage';
+
+// A wrapper for protected routes
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+  const { currentUser } = useAuth();
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -267,10 +279,12 @@ function App() {
         {/* Main Content */}
         <Box sx={{ flexGrow: 1, py: isMobile ? '70px' : 0, pb: isMobile ? '80px' : 4 }}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/stats" element={<Stats />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/settings" element={settingsPage} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/stats" element={<ProtectedRoute><Stats /></ProtectedRoute>} />
+            <Route path="/journal" element={<ProtectedRoute><Journal /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute>{settingsPage}</ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Box>
@@ -293,11 +307,13 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <HabitProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </HabitProvider>
+      <Router>
+        <AuthProvider>
+          <HabitProvider>
+            <AppContent />
+          </HabitProvider>
+        </AuthProvider>
+      </Router>
     </ThemeProvider>
   );
 }

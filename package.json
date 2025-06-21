@@ -21,9 +21,11 @@
     "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "firebase": "^11.9.1",
     "react": "^19.1.0",
     "react-color": "^2.19.3",
     "react-dom": "^19.1.0",
+    "react-lottie-player": "^2.1.0",
     "react-router-dom": "^7.6.2",
     "recharts": "^2.15.3",
     "uuid": "^11.1.0"
