@@ -22,9 +22,10 @@ import {
   Add as AddIcon,
   Check as CheckIcon,
   Info as InfoIcon,
+  EditNote as EditNoteIcon,
 } from '@mui/icons-material';
 import { useHabitContext } from '../contexts/HabitContext';
-import type { Habit } from '../types';
+import type { Habit, HabitLog } from '../types';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -52,10 +53,8 @@ const AddHabitDialog: FC<AddHabitDialogProps> = ({ open, onClose, onAddHabit, we
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('🎯');
   const [color, setColor] = useState('#2196F3');
-
   const icons = ['🎯', '🏃', '📖', '🧘', '🎨', '💻', '💡', '✅'];
   const colors = ['#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#2196F3', '#03A9F4', '#009688'];
-
   const handleAdd = () => {
     if (name) {
       onAddHabit({
@@ -71,7 +70,6 @@ const AddHabitDialog: FC<AddHabitDialogProps> = ({ open, onClose, onAddHabit, we
       setDescription('');
     }
   };
-
   return (
     <Dialog open={open} onClose={onClose} PaperProps={{ sx: { borderRadius: 4 } }}>
       <DialogTitle sx={{ fontWeight: 600, textAlign: 'center' }}>Yeni Haftalık Alışkanlık</DialogTitle>
@@ -137,11 +135,16 @@ const AddHabitDialog: FC<AddHabitDialogProps> = ({ open, onClose, onAddHabit, we
 
 // --- Main Dashboard Component ---
 const Dashboard: React.FC = () => {
-  const { state, addHabit, addHabitLog, updateHabit, deleteHabit } = useHabitContext();
+  const { state, addHabit, upsertHabitLog, deleteHabitLog, updateHabit, deleteHabit } = useHabitContext();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [selectedDay, setSelectedDay] = useState<Dayjs>(dayjs());
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const theme = useTheme();
+
+  // Note Dialog State
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [currentLog, setCurrentLog] = useState<Omit<HabitLog, 'id'> | null>(null);
+  const [noteText, setNoteText] = useState('');
 
   const startOfWeek = selectedDate.startOf('week');
   const endOfWeek = selectedDate.endOf('week');
@@ -154,14 +157,43 @@ const Dashboard: React.FC = () => {
 
   const handleToggleCompletion = (habit: Habit, date: Dayjs) => {
     const logForDay = state.habitLogs.find(log => log.habitId === habit.id && dayjs(log.date).isSame(date, 'day'));
-    if (!logForDay) {
-      addHabitLog({
+    
+    if (logForDay) {
+      // If log exists, delete it (un-completing the habit)
+      deleteHabitLog({ habitId: habit.id, date: date.toDate() });
+    } else {
+      // If no log, create a new one without a note
+      upsertHabitLog({
         habitId: habit.id,
         date: date.toDate(),
         completedValue: 1,
         notes: '',
       });
     }
+  };
+
+  const handleOpenNoteDialog = (habit: Habit, date: Dayjs) => {
+    const logForDay = state.habitLogs.find(log => log.habitId === habit.id && dayjs(log.date).isSame(date, 'day'));
+    const logData = logForDay || {
+        habitId: habit.id,
+        date: date.toDate(),
+        completedValue: 1,
+    };
+    setCurrentLog(logData);
+    setNoteText(logForDay?.notes || '');
+    setNoteDialogOpen(true);
+  };
+
+  const handleSaveNote = () => {
+    if (currentLog) {
+      upsertHabitLog({
+        ...currentLog,
+        notes: noteText,
+      });
+    }
+    setNoteDialogOpen(false);
+    setCurrentLog(null);
+    setNoteText('');
   };
 
   // Edit handler for HabitCard
@@ -230,19 +262,22 @@ const Dashboard: React.FC = () => {
             {habitsForWeek.length > 0 ? (
               <Grid container spacing={2}>
                 {habitsForWeek.map((habit) => {
-                  const isCompleted = state.habitLogs.some(
+                  const logForDay = state.habitLogs.find(
                     (log) =>
                       log.habitId === habit.id &&
                       dayjs(log.date).isSame(selectedDay, 'day')
                   );
+                  const isCompleted = !!logForDay;
                   return (
                     <Box key={habit.id} sx={{ width: '100%' }}>
                       <HabitCard
                         habit={habit}
                         isCompleted={isCompleted}
+                        note={logForDay?.notes}
                         onToggleComplete={() => handleToggleCompletion(habit, selectedDay)}
                         onEdit={(updated) => handleEditHabit(habit, updated)}
                         onDelete={() => handleDeleteHabit(habit)}
+                        onOpenNoteDialog={() => handleOpenNoteDialog(habit, selectedDay)}
                       />
                     </Box>
                   );
@@ -251,7 +286,7 @@ const Dashboard: React.FC = () => {
             ) : (
               <Box sx={{ textAlign: 'center', py: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                 <Typography variant="h6" sx={{ mt: 2 }}>Bu hafta için alışkanlık yok.</Typography>
-                <Typography color="text.secondary">Yeni bir haftalık alışkanlık eklemek için '+' butonuna tıkla.</Typography>
+                <Typography color="text.secondary">Yeni bir haftalık alışkanlık eklemek için '+' butonuna tıklayın.</Typography>
               </Box>
             )}
           </Paper>
@@ -272,6 +307,35 @@ const Dashboard: React.FC = () => {
         >
           <AddIcon />
         </Fab>
+
+        {/* Note Dialog */}
+        <Dialog open={noteDialogOpen} onClose={() => setNoteDialogOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <EditNoteIcon />
+                    Alışkanlık Notu Ekle/Düzenle
+                </Box>
+            </DialogTitle>
+            <DialogContent>
+                <TextField
+                    autoFocus
+                    multiline
+                    rows={4}
+                    margin="dense"
+                    id="note"
+                    label="Bugün bu alışkanlıkla ilgili ne düşünüyorsun?"
+                    type="text"
+                    fullWidth
+                    variant="outlined"
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                />
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => setNoteDialogOpen(false)}>İptal</Button>
+                <Button onClick={handleSaveNote} variant="contained">Kaydet</Button>
+            </DialogActions>
+        </Dialog>
       </Container>
     </LocalizationProvider>
   );

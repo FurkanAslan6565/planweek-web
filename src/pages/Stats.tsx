@@ -157,6 +157,7 @@ const Stats: React.FC = () => {
           <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)}>
             <Tab label="Haftalık İlerleme" />
             <Tab label="En İyi Performans" />
+            <Tab label="Haftalık Rapor" />
           </Tabs>
         </Box>
 
@@ -225,6 +226,61 @@ const Stats: React.FC = () => {
                   </React.Fragment>
                 ))}
               </List>
+            </CardContent>
+          </Card>
+        </TabPanel>
+
+        {/* Weekly Report Tab */}
+        <TabPanel value={tabValue} index={2}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Haftalık Alışkanlık Dökümü
+              </Typography>
+              {weeklyHabits.length > 0 ? (
+                <List>
+                  {weeklyHabits.map((habit) => {
+                    const dailyStatuses = weekDays.map(day => {
+                      const isCompleted = weeklyLogs.some(log => 
+                        log.habitId === habit.id && dayjs(log.date).isSame(day, 'day')
+                      );
+                      return { day: getShortDayName(day.toDate()), date: day, isCompleted };
+                    });
+
+                    return (
+                      <React.Fragment key={habit.id}>
+                        <ListItem>
+                          <ListItemIcon sx={{mr: 1}}>
+                            <Typography variant="h4">{habit.icon}</Typography>
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={<Typography variant="h6">{habit.name}</Typography>}
+                            secondary={
+                              <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                                {dailyStatuses.map(status => (
+                                  <Chip
+                                    key={status.date.toISOString()}
+                                    label={status.day} 
+                                    icon={status.isCompleted ? <CheckIcon fontSize="small" /> : undefined}
+                                    variant={status.isCompleted ? 'filled' : 'outlined'}
+                                    color={status.isCompleted ? 'success' : 'default'}
+                                    size="small"
+                                  />
+                                ))}
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                        <Divider component="li" />
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              ) : (
+                <Typography sx={{textAlign: 'center', py: 4}}>
+                  Bu hafta için planlanmış bir alışkanlık bulunmuyor.
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </TabPanel>
